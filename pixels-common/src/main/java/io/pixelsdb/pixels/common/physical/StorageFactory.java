@@ -48,6 +48,7 @@ public class StorageFactory
     private StorageFactory()
     {
         String value = ConfigFactory.Instance().getProperty("enabled.storage.schemes");
+        logger.error(String.format("StorageFactory, value: %s", value));
         requireNonNull(value, "enabled.storage.schemes is not configured");
         String[] schemeNames = value.trim().split(",");
         checkArgument(schemeNames.length > 0,
@@ -71,7 +72,7 @@ public class StorageFactory
             if (!providerExists)
             {
                 // only log a warning, do not throw exception.
-                logger.warn(String.format(
+                logger.error(String.format(
                         "no storage provider exists for scheme: %s", scheme.name()));
             }
         }
@@ -180,6 +181,7 @@ public class StorageFactory
         {
             return storageImpls.get(scheme);
         }
+        logger.error(String.format("provider is null: %b", this.storageProviders.get(scheme) == null));
 
         Storage storage = this.storageProviders.get(scheme).createStorage(scheme);
         storageImpls.put(scheme, storage);
