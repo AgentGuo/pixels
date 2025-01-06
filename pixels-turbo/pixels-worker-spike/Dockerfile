@@ -6,8 +6,9 @@ ARG IMPL_JAR_FILE
 
 # 创建工作目录
 WORKDIR /app
+RUN mkdir -p /app/etc
 ENV PIXELS_HOME=/app/
-COPY pixels.properties /app/pixels.properties
+COPY pixels.properties /app/etc/pixels.properties
 # 复制 JAR 文件到镜像中
 COPY ${HANDLER_JAR_FILE} /app/spike-java-handler.jar
 COPY ${IMPL_JAR_FILE} /app/spike-java-handler-impl.jar

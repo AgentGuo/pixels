@@ -441,6 +441,7 @@ public class PixelsPlanner
                                 .setLargeTable(rightTableInfo)
                                 .setJoinInfo(joinInfo)
                                 .setOutput(output).build();
+                        complete.setRequiredCpu(rightInputSplit.getInputInfos().size());
 
                         joinInputs.add(complete);
                     }

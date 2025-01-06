@@ -70,6 +70,16 @@ public class SpikeAsyncClient {
         }
     }
 
+    public final ListenableFuture<SpikeServiceProto.CallFunctionResponse> invoke(String functionName, String payload, int requiredCpu, int requiredMemory) {
+        SpikeServiceProto.CallFunctionRequest request = SpikeServiceProto.CallFunctionRequest.newBuilder()
+                .setFunctionName(functionName)
+                .setCpu(requiredCpu)
+                .setMemory(requiredMemory)
+                .setPayload(payload)
+                .build();
+        return this.stub.withDeadlineAfter(this.timeout, TimeUnit.SECONDS).callFunction(request);
+    }
+
     public final ListenableFuture<SpikeServiceProto.CallFunctionResponse> invoke(String functionName, String payload) {
         SpikeServiceProto.CallFunctionRequest request = SpikeServiceProto.CallFunctionRequest.newBuilder()
                 .setFunctionName(functionName)

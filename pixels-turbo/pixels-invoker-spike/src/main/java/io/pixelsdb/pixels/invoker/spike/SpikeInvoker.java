@@ -51,7 +51,9 @@ public abstract class SpikeInvoker implements Invoker {
     public CompletableFuture<Output> genCompletableFuture(ListenableFuture<SpikeServiceProto.CallFunctionResponse> listenableFuture) {
         CompletableFuture<SpikeServiceProto.CallFunctionResponse> completableFuture = ListenableFutureAdapter.toCompletable(listenableFuture);
         return completableFuture.handle((response, err) -> {
-            if (response.getErrorCode() == 0) {
+            if (response == null){
+                throw new RuntimeException("failed to execute the request, response is null");
+            } else if (response.getErrorCode() == 0) {
                 String outputJson = response.getPayload();
                 Output output = this.parseOutput(outputJson);
                 if (output == null) {
@@ -66,10 +68,10 @@ public abstract class SpikeInvoker implements Invoker {
         });
     }
 
-    public final CompletableFuture<Output> invoke(Input input) {
+    public CompletableFuture<Output> invoke(Input input) {
         WorkerRequest workerRequest = new WorkerRequest(this.workerType, JSON.toJSONString(input, SerializerFeature.DisableCircularReferenceDetect));
         ListenableFuture<SpikeServiceProto.CallFunctionResponse> future = SpikeAsyncClient.getInstance().invoke(this.functionName,
-                JSON.toJSONString(workerRequest, SerializerFeature.DisableCircularReferenceDetect));
+                JSON.toJSONString(workerRequest, SerializerFeature.DisableCircularReferenceDetect), input.getRequiredCpu(), input.getRequiredMemory());
         return genCompletableFuture(future);
     }
 

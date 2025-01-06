@@ -20,9 +20,20 @@
 package io.pixelsdb.pixels.invoker.spike;
 
 import com.alibaba.fastjson.JSON;
+import io.pixelsdb.pixels.common.turbo.Input;
 import io.pixelsdb.pixels.common.turbo.Output;
 import io.pixelsdb.pixels.common.turbo.WorkerType;
+import io.pixelsdb.pixels.planner.plan.physical.domain.BroadcastTableInfo;
+import io.pixelsdb.pixels.planner.plan.physical.domain.InputSplit;
+import io.pixelsdb.pixels.planner.plan.physical.input.BroadcastChainJoinInput;
+import io.pixelsdb.pixels.planner.plan.physical.input.ScanInput;
 import io.pixelsdb.pixels.planner.plan.physical.output.JoinOutput;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 public class BroadcastChainJoinInvoker extends SpikeInvoker
 {
@@ -35,5 +46,15 @@ public class BroadcastChainJoinInvoker extends SpikeInvoker
     public Output parseOutput(String outputJson)
     {
         return JSON.parseObject(outputJson, JoinOutput.class);
+    }
+
+    @Override
+    public CompletableFuture<Output> invoke(Input input) {
+        BroadcastChainJoinInput broadcastChainJoinInput = (BroadcastChainJoinInput) input;
+        BroadcastTableInfo rightTable = requireNonNull(broadcastChainJoinInput.getLargeTable(), "rightTable is null");
+        List<InputSplit> rightInputs = requireNonNull(rightTable.getInputSplits(), "rightInputs is null");
+        checkArgument(rightInputs.size() > 0, "rightPartitioned is empty");
+        broadcastChainJoinInput.setRequiredCpu(rightInputs.size());
+        return super.invoke(broadcastChainJoinInput);
     }
 }

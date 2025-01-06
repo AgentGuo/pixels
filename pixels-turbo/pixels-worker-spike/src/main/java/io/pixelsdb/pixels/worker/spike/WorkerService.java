@@ -25,7 +25,7 @@ public class WorkerService<T extends WorkerInterface<I, O>, I extends Input, O e
         this.typeParameterClass = typeParameterClass;
     }
 
-    public SpikeWorker.CallWorkerFunctionResp execute(String workerPayLoad, String requestId)
+    public SpikeWorker.CallWorkerFunctionResp execute(String workerPayLoad, long requestId)
     {
         I input = JSON.parseObject(workerPayLoad, typeParameterClass);
         O output;
@@ -48,7 +48,7 @@ public class WorkerService<T extends WorkerInterface<I, O>, I extends Input, O e
                 classCnt++;
             }
             log.error(String.format("classCnt: %d", classCnt));
-            WorkerContext context = new WorkerContext(LogManager.getLogger(handlerClass), new WorkerMetrics(), requestId);
+            WorkerContext context = new WorkerContext(LogManager.getLogger(handlerClass), new WorkerMetrics(), Long.toString(requestId));
             WorkerInterface<I, O> worker = handlerClass.getConstructor(WorkerContext.class).newInstance(context);
             log.info(String.format("execute input: %s",
                     JSON.toJSONString(input, SerializerFeature.DisableCircularReferenceDetect)));

@@ -20,9 +20,15 @@
 package io.pixelsdb.pixels.invoker.spike;
 
 import com.alibaba.fastjson.JSON;
+import io.pixelsdb.pixels.common.turbo.Input;
 import io.pixelsdb.pixels.common.turbo.Output;
 import io.pixelsdb.pixels.common.turbo.WorkerType;
+import io.pixelsdb.pixels.planner.plan.physical.input.PartitionedJoinInput;
 import io.pixelsdb.pixels.planner.plan.physical.output.JoinOutput;
+
+import java.util.concurrent.CompletableFuture;
+
+import static com.google.common.base.Preconditions.checkArgument;
 
 public class PartitionedJoinStreamInvoker extends SpikeInvoker
 {
@@ -35,5 +41,16 @@ public class PartitionedJoinStreamInvoker extends SpikeInvoker
     public Output parseOutput(String outputJson)
     {
         return JSON.parseObject(outputJson, JoinOutput.class);
+    }
+
+    @Override
+    public CompletableFuture<Output> invoke(Input input) {
+        PartitionedJoinInput partitionedJoinInput = (PartitionedJoinInput) input;
+        int leftParallelism = partitionedJoinInput.getSmallTable().getParallelism();
+        checkArgument(leftParallelism > 0, "leftParallelism is not positive");
+        int rightParallelism = partitionedJoinInput.getLargeTable().getParallelism();
+        checkArgument(rightParallelism > 0, "rightParallelism is not positive");
+        partitionedJoinInput.setRequiredCpu(Math.max(leftParallelism, rightParallelism));
+        return super.invoke(partitionedJoinInput);
     }
 }

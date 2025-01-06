@@ -20,9 +20,20 @@
 package io.pixelsdb.pixels.invoker.spike;
 
 import com.alibaba.fastjson.JSON;
+import io.pixelsdb.pixels.common.turbo.Input;
 import io.pixelsdb.pixels.common.turbo.Output;
 import io.pixelsdb.pixels.common.turbo.WorkerType;
+import io.pixelsdb.pixels.planner.plan.physical.domain.BroadcastTableInfo;
+import io.pixelsdb.pixels.planner.plan.physical.domain.InputSplit;
+import io.pixelsdb.pixels.planner.plan.physical.input.BroadcastJoinInput;
+import io.pixelsdb.pixels.planner.plan.physical.input.PartitionedChainJoinInput;
 import io.pixelsdb.pixels.planner.plan.physical.output.JoinOutput;
+
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 public class PartitionedChainJoinInvoker extends SpikeInvoker
 {
@@ -35,5 +46,16 @@ public class PartitionedChainJoinInvoker extends SpikeInvoker
     public Output parseOutput(String outputJson)
     {
         return JSON.parseObject(outputJson, JoinOutput.class);
+    }
+
+    @Override
+    public CompletableFuture<Output> invoke(Input input) {
+        PartitionedChainJoinInput partitionedChainJoinInput = (PartitionedChainJoinInput) input;
+        int leftParallelism = partitionedChainJoinInput.getSmallTable().getParallelism();
+        checkArgument(leftParallelism > 0, "leftParallelism is not positive");
+        int rightParallelism = partitionedChainJoinInput.getLargeTable().getParallelism();
+        checkArgument(rightParallelism > 0, "rightParallelism is not positive");
+        partitionedChainJoinInput.setRequiredCpu(Math.max(leftParallelism, rightParallelism));
+        return super.invoke(partitionedChainJoinInput);
     }
 }

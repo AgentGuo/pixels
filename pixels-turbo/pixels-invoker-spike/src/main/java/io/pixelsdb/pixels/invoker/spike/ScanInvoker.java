@@ -20,9 +20,16 @@
 package io.pixelsdb.pixels.invoker.spike;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.google.common.util.concurrent.ListenableFuture;
+import io.pixelsdb.pixels.common.turbo.Input;
 import io.pixelsdb.pixels.common.turbo.Output;
 import io.pixelsdb.pixels.common.turbo.WorkerType;
+import io.pixelsdb.pixels.planner.plan.physical.input.ScanInput;
 import io.pixelsdb.pixels.planner.plan.physical.output.ScanOutput;
+import io.pixelsdb.pixels.worker.spike.WorkerRequest;
+
+import java.util.concurrent.CompletableFuture;
 
 public class ScanInvoker extends SpikeInvoker
 {
@@ -35,5 +42,11 @@ public class ScanInvoker extends SpikeInvoker
     public Output parseOutput(String outputJson)
     {
         return JSON.parseObject(outputJson, ScanOutput.class);
+    }
+    @Override
+    public CompletableFuture<Output> invoke(Input input) {
+        ScanInput scanInput = (ScanInput) input;
+        scanInput.setRequiredCpu(scanInput.getTableInfo().getInputSplits().size());
+        return super.invoke(scanInput);
     }
 }

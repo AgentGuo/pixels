@@ -20,9 +20,13 @@
 package io.pixelsdb.pixels.invoker.spike;
 
 import com.alibaba.fastjson.JSON;
+import io.pixelsdb.pixels.common.turbo.Input;
 import io.pixelsdb.pixels.common.turbo.Output;
 import io.pixelsdb.pixels.common.turbo.WorkerType;
+import io.pixelsdb.pixels.planner.plan.physical.input.PartitionInput;
 import io.pixelsdb.pixels.planner.plan.physical.output.PartitionOutput;
+
+import java.util.concurrent.CompletableFuture;
 
 public class PartitionStreamInvoker extends SpikeInvoker
 {
@@ -35,5 +39,12 @@ public class PartitionStreamInvoker extends SpikeInvoker
     public Output parseOutput(String outputJson)
     {
         return JSON.parseObject(outputJson, PartitionOutput.class);
+    }
+
+    @Override
+    public CompletableFuture<Output> invoke(Input input) {
+        PartitionInput partitionInput = (PartitionInput) input;
+        partitionInput.setRequiredCpu(partitionInput.getTableInfo().getInputSplits().size());
+        return super.invoke(partitionInput);
     }
 }
